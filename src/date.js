@@ -74,28 +74,43 @@ export class DropdownDate extends React.Component {
     generateYearOptions() {
         const { startYear, endYear } = this.state;
         const yearOptions = [];
-        yearOptions.push(
-            <option key={-1} value="-1"
-                className={(this.props.classes && this.props.classes.yearOptions) ? this.props.classes.yearOptions : null}
-            >
-                {(this.props.defaultValues && this.props.defaultValues.year) ? this.props.defaultValues.year : ''}
-            </option>
-        );
+        if (this.props.options.blankOptions && this.props.options.blankOptions.year) {
+            yearOptions.push(
+                <option key={-1} value={-1}
+                >{this.props.options.blankOptions.year.label || "Please Select"}</option>
+            );
+        }
         if (this.props.options && this.props.options.yearReverse) {
             for (let i = endYear; i >= startYear; i--) {
-                yearOptions.push(
-                    <option key={i} value={i}
-                        className={(this.props.classes && this.props.classes.yearOptions) ? this.props.classes.yearOptions : null}
-                    >{i}</option>
-                );
+                if (this.props.values && this.props.values.year && i == this.props.values.year) {
+                    yearOptions.push(
+                        <option key={i} value={i} selected
+                            className={(this.props.classes && this.props.classes.yearOptions) ? this.props.classes.yearOptions : null}
+                        >{i}</option>
+                    );
+                } else {
+                    yearOptions.push(
+                        <option key={i} value={i}
+                            className={(this.props.classes && this.props.classes.yearOptions) ? this.props.classes.yearOptions : null}
+                        >{i}</option>
+                    );
+                }
             }
         } else {
             for (let i = startYear; i <= endYear; i++) {
-                yearOptions.push(
-                    <option key={i} value={i}
-                        className={(this.props.classes && this.props.classes.yearOptions) ? this.props.classes.yearOptions : null}
-                    >{i}</option>
-                );
+                if (this.props.values && this.props.values.month && i == this.props.values.year) {
+                    yearOptions.push(
+                        <option key={i} value={i} selected
+                            className={(this.props.classes && this.props.classes.yearOptions) ? this.props.classes.yearOptions : null}
+                        >{i}</option>
+                    );
+                } else {
+                    yearOptions.push(
+                        <option key={i} value={i}
+                            className={(this.props.classes && this.props.classes.yearOptions) ? this.props.classes.yearOptions : null}
+                        >{i}</option>
+                    );
+                }
             }
         }
         return yearOptions;
@@ -146,18 +161,26 @@ export class DropdownDate extends React.Component {
         }
 
         const monthOptions = [];
-        monthOptions.push(
-            <option key={-1} value="-1"
-                className={(this.props.classes && this.props.classes.monthOptions) ? this.props.classes.monthOptions : null}
-            >{(this.props.defaultValues && this.props.defaultValues.month) ? this.props.defaultValues.month : ''}
-            </option>
-        );
-        months.forEach((elem) => {
-            monthOptions.push(
-                <option key={elem.value} value={elem.value}
-                    className={(this.props.classes && this.props.classes.monthOptions) ? this.props.classes.monthOptions : null}
-                >{elem.month}</option>
-            );
+        if (this.props.options.blankOptions && this.props.options.blankOptions.month) {
+            months = [{
+                value: "-1",
+                month: this.props.options.blankOptions.month.label || "Please Select"
+            }].concat(months);
+        }
+        months.forEach((elem, index) => {
+            if (this.props.values && this.props.values.month && elem.month == this.props.values.month) {
+                monthOptions.push(
+                    <option key={index} value={elem.value} selected
+                        className={(this.props.classes && this.props.classes.monthOptions) ? this.props.classes.monthOptions : null}
+                    >{elem.month}</option>
+                );
+            } else {
+                monthOptions.push(
+                    <option key={index} value={elem.value}
+                        className={(this.props.classes && this.props.classes.monthOptions) ? this.props.classes.monthOptions : null}
+                    >{elem.month}</option>
+                );
+            }
         });
 
         return monthOptions;
@@ -238,17 +261,29 @@ export class DropdownDate extends React.Component {
     }
 
     handleYearChange(year) {
-        year = parseInt(year);
-        this.setState({ selectedYear: year });
-        if (this.props.onYearChange) { this.props.onYearChange(year); }
-        this.handleDateChange(unit.year, year);
+        if (!year) {
+            this.setState({ selectedYear: null });
+            if (this.props.onYearChange) { this.props.onYearChange(null); }
+            this.handleDateChange(unit.year, null);
+        } else {
+            year = parseInt(year);
+            this.setState({ selectedYear: year });
+            if (this.props.onYearChange) { this.props.onYearChange(year); }
+            this.handleDateChange(unit.year, year);
+        }
     }
 
     handleMonthChange(month) {
-        month = parseInt(month);
-        this.setState({ selectedMonth: month });
-        if (this.props.onMonthChange) { this.props.onMonthChange(monthByNumber[month]); }
-        this.handleDateChange(unit.month, month);
+        if (!month) {
+            this.setState({ selectedMonth: null });
+            if (this.props.onMonthChange) { this.props.onMonthChange(null); }
+            this.handleDateChange(unit.month, null);
+        } else {
+            month = parseInt(month);
+            this.setState({ selectedMonth: month });
+            if (this.props.onMonthChange) { this.props.onMonthChange(monthByNumber[month]); }
+            this.handleDateChange(unit.month, month);
+        }
     }
 
     handleDayChange(day) {
@@ -282,8 +317,14 @@ export class DropdownDate extends React.Component {
                         id={(this.props.ids && this.props.ids.year) ? this.props.ids.year : null}
                         name={(this.props.names && this.props.names.year) ? this.props.names.year : null}
                         className={(this.props.classes && this.props.classes.year) ? this.props.classes.year : null}
-                        onChange={(e) => this.handleYearChange(e.target.value)}
-                        value={this.state.selectedYear}
+                        onChange={(e) => {
+                            if (e.target.value == -1) {
+                                this.handleYearChange(null)
+                            } else {
+                                this.handleYearChange(e.target.value)
+                            }
+                        }}
+                        value={this.props.values && this.props.values.year ? this.props.values.year : this.state.selectedYear}
                     >
                         {this.generateYearOptions()}
                     </select>
@@ -293,8 +334,14 @@ export class DropdownDate extends React.Component {
                         id={(this.props.ids && this.props.ids.month) ? this.props.ids.month : null}
                         name={(this.props.names && this.props.names.month) ? this.props.names.month : null}
                         className={(this.props.classes && this.props.classes.month) ? this.props.classes.month : null}
-                        onChange={(e) => this.handleMonthChange(e.target.value)}
-                        value={this.state.selectedMonth}
+                        onChange={(e) => {
+                            if (e.target.value == -1) {
+                                this.handleMonthChange(null)
+                            } else {
+                                this.handleMonthChange(e.target.value)
+                            }
+                        }}
+                        value={this.props.values && this.props.values.month ? numberByMonth[this.props.values.month] : this.state.selectedMonth}
                     >
                         {this.generateMonthOptions()}
                     </select>
